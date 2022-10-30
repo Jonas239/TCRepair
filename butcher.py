@@ -56,9 +56,12 @@ def read_in_file(file_name):
         lines = ground_file.readlines()
     return lines
 
-def check_equivalence():
-    """checks if passed code snippets are equivalent"""
-    pass
+def check_equivalence_snippet_ratio(final_string_one, final_string_two):
+    """checks fuzz ratio of passed code snippets"""
+    return fuzz.ratio(final_string_one,final_string_two)
+
+def check_equivalence_snippet(ground_truth, translation_file):
+    return
 
 
 def extract_type_(input_string):
