@@ -1,5 +1,6 @@
 """Main script"""
 import re
+from venv import create
 from tree_sitter import Language, Parser
 from fuzzywuzzy import fuzz,process
 
@@ -44,10 +45,10 @@ operators_list = [["==", "!=", ">=", "<=", ">", "<"],  # comparison
 def create_parse_tree(input_code, input_language):
     """return s-expression and parse tree for the given code and language using the tree-sitter"""
     if input_language == "CPP":
-        return parser_cpp.parse(bytes(input_code, "utf-8")).root_node.sexp()
+        return parser_cpp.parse(bytes(input_code, "utf-8"))
     if input_language == "JAVA":
-        return parser_jv.parse(bytes(input_code, "utf-8")).root_node.sexp()
-    return parser_py.parse(bytes(input_code, "utf-8")).root_node.sexp()
+        return parser_jv.parse(bytes(input_code, "utf-8"))
+    return parser_py.parse(bytes(input_code, "utf-8"))
 
 
 def read_in_file(file_name):
@@ -60,9 +61,25 @@ def check_equivalence_snippet_ratio(final_string_one, final_string_two):
     """checks fuzz ratio of passed code snippets"""
     return fuzz.ratio(final_string_one,final_string_two)
 
-def check_equivalence_snippet(ground_truth, translation_file):
-    return
+def get_snippet(string, language):
+    """returns a tree sitter snippet for comparison"""
+    code_snippet = string
+    tree = create_parse_tree(code_snippet,language)
+    cursor = tree.walk()
+    cursor.goto_first_child()
+    final = str(cursor.node.type) + "," + extract_type_(string) + "," + extract_value(string)[0]
+    return final
 
+def check_completeness(lines, language):
+    line = lines[0]
+    tree = create_parse_tree(line,language)
+    i = 1
+    while ["ERROR","MISSING"] in tree.root_node.sexp() or line == '':
+        new_line = lines[i]
+        line = line + "\n" + new_line
+        tree = create_parse_tree(line,language)
+        i += 1
+    return line
 
 def extract_type_(input_string):
     """return the type_ of variable if present, derive it otherwise"""
@@ -103,10 +120,10 @@ def extract_value(input_string):
     string = re.sub('([a-zA-Z]+[_a-zA-Z0-9]*)', '', input_string)
     numbers.extend(re.findall(r'\d+(?:\.\d+)?', string))
 
-    return [(number, numbers.count(number)) for number in numbers] if numbers else None
+    return [number for number in numbers] if numbers else None
 
 
-def extract_name(self, input_string):
+def extract_name(input_string):
     """return variable names from given input"""
     string = re.sub('true|false|True|False', '', input_string)
     string = re.sub(r'\(([^\()]*)\)', '@', string) # print argument in java and python
@@ -122,7 +139,7 @@ def extract_name(self, input_string):
                 tokens.remove(token)
 
     string = " ".join(tokens)
-    best_match = process.extractOne(string, self.keywords.keys(), scorer=fuzz.token_set_ratio)
+    best_match = process.extractOne(string, keywords.keys(), scorer=fuzz.token_set_ratio)
     if best_match[-1] >= 45:
         return True, best_match[0]
 
@@ -137,5 +154,15 @@ def extract_operator(input_string):
         for operator in group:
             if operator in input_string:
                 extracted_operators.append(operator)
-    return extracted_operators if extracted_operators else None
+    return extracted_operators
  
+
+
+string_py = "a = 5"
+string_jv = "a = 5;"
+string_cpp = "a = 5;"
+
+
+
+print(check_equivalence_snippet_ratio(get_snippet(string_py,PYTHON),get_snippet(string_jv,JAVA)))
+
