@@ -81,6 +81,21 @@ def check_completeness(lines, language):
         i += 1
     return line
 
+def node_text_bytes(source, node):
+    return source[node.start_byte:node.end_byte]
+
+def node_text_string(source, node):
+    return bytes(source, "utf8")[node.start_byte:node.end_byte].decode("utf-8")
+
+
+
+
+
+
+
+
+############################################# Variable extraction #############################################
+
 def extract_type_(input_string):
     """return the type_ of variable if present, derive it otherwise"""
     string = input_string.split()
