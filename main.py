@@ -86,6 +86,7 @@ def node_text_bytes(source, node):
 
 def node_text_string(source, node):
     return bytes(source, "utf8")[node.start_byte:node.end_byte].decode("utf-8")
+    
 
 
 
