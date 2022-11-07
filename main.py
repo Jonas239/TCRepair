@@ -1,6 +1,6 @@
 """Main script"""
-from tree_sitter import Language, Parser
 import json
+from tree_sitter import Language, Parser
 
 Language.build_library(
     'build/my-languages.so',
@@ -37,18 +37,19 @@ def create_parse_tree(input_code, input_language):
         return parser_jv.parse(bytes(input_code, "utf-8"))
     return parser_py.parse(bytes(input_code, "utf-8"))
 
-def node_text_bytes(source, node):
-    return source[node.start_byte:node.end_byte]
 
-def node_text_string(source, node):
+def node_source_to_string(source, node):
+    """returns the corresponding code for every node"""
     return bytes(source, "utf8")[node.start_byte:node.end_byte].decode("utf-8")
 
+
 def traverse_tree(tree, code):
+    """function for traversing the tree"""
     cursor = tree.walk()
 
     reached_root = False
-    while reached_root == False:
-        yield cursor.node.type, node_text_string(code, cursor.node), cursor.node.start_byte, cursor.node.end_byte
+    while reached_root is False:
+        yield cursor.node.type, node_source_to_string(code, cursor.node), cursor.node.start_byte, cursor.node.end_byte
 
         if cursor.goto_first_child():
             continue
@@ -65,27 +66,32 @@ def traverse_tree(tree, code):
             if cursor.goto_next_sibling():
                 retracing = False
 
-code = "int function(){return a + c;} int another_function {return a + b;}"
-tree = create_parse_tree(code,CPP)
-traverse_tree = traverse_tree(tree, code)
-json_dict = {}
-for node in traverse_tree:
-    key = node[0] + "_" + str(node[2]) + "_" + str(node[3])
-    json_dict[key] = node[1]
+
+def create_array(tree, code, language):
+    """returns the final array to be written to json"""
+    code_ = code
+    if language == PYTHON:
+        tree = create_parse_tree(code_, PYTHON)
+    if language == JAVA:
+        tree = create_parse_tree(code_, PYTHON)
+    else:
+        tree = create_parse_tree(code_, CPP)
+    traverse_tree_ = traverse_tree(tree, code_)
+    json_dict = {}
+    for node in traverse_tree_:
+        key = node[0] + "_" + str(node[2]) + "_" + str(node[3])
+        json_dict[key] = node[1]
+    return json_dict
 
 
-json_obj = json.dumps(json_dict,indent=4)
-with open("py_tree.json","w") as outfile:
-    outfile.write(json_obj)
-
-
-
-
-
-
-
-
-
-
-
-
+def create_json(array, language):
+    """writes array to json"""
+    if language == PYTHON:
+        file_name = "py_tree.json"
+    if language == JAVA:
+        file_name = "jv_tree.json"
+    else:
+        file_name = "cpp_tree.json"
+    json_obj = json.dumps(array, indent=4)
+    with open(file_name, "w", encoding="utf-8") as outfile:
+        outfile.write(json_obj)
