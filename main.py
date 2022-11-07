@@ -29,13 +29,22 @@ parser_cpp = Parser()
 parser_cpp.set_language(CPP_LANGUAGE)
 
 
+def open_file(file):
+    """opens a file and returns its content as string"""
+    with open(file, "r", encoding="utf-8") as f:
+        file_ = f.read()
+    return file_
+
+
 def create_parse_tree(input_code, input_language):
     """return the parse tree for the given code and language using tree-sitter"""
     if input_language == "CPP":
         return parser_cpp.parse(bytes(input_code, "utf-8"))
     if input_language == "JAVA":
         return parser_jv.parse(bytes(input_code, "utf-8"))
-    return parser_py.parse(bytes(input_code, "utf-8"))
+    if input_language == "PYTHON":
+        return parser_py.parse(bytes(input_code, "utf-8"))
+    
 
 
 def node_source_to_string(source, node):
@@ -67,14 +76,14 @@ def traverse_tree(tree, code):
                 retracing = False
 
 
-def create_array(tree, code, language):
-    """returns the final array to be written to json"""
+def create_dict(tree, code, language):
+    """returns the final dict to be written to json"""
     code_ = code
     if language == PYTHON:
         tree = create_parse_tree(code_, PYTHON)
     if language == JAVA:
         tree = create_parse_tree(code_, PYTHON)
-    else:
+    if language == CPP:
         tree = create_parse_tree(code_, CPP)
     traverse_tree_ = traverse_tree(tree, code_)
     json_dict = {}
@@ -83,6 +92,17 @@ def create_array(tree, code, language):
         json_dict[key] = node[1]
     return json_dict
 
+def sanitize_dict(dict):
+    """sanitizes the dictionary for unnecessary infos"""
+    unnecessary_infos =[")","(",":","=","+","-","*","//",";","^","/","\\","[","]", "{","}",".",",","%","comment","module","translation_unit","&","\""]
+    for key in list(dict.keys()):
+        for string in unnecessary_infos:
+            if string in key:
+                try:
+                    del dict[key]
+                except:
+                    continue
+    return dict
 
 def create_json(array, language):
     """writes array to json"""
@@ -90,8 +110,33 @@ def create_json(array, language):
         file_name = "py_tree.json"
     if language == JAVA:
         file_name = "jv_tree.json"
-    else:
+    if language == CPP:
         file_name = "cpp_tree.json"
     json_obj = json.dumps(array, indent=4)
     with open(file_name, "w", encoding="utf-8") as outfile:
         outfile.write(json_obj)
+
+
+if __name__ == "__main__":
+
+    code_cpp = open_file("geeks_for_geeks_dataset/cpp/ADD_1_TO_A_GIVEN_NUMBER.cpp")
+    code_java = open_file(
+        "geeks_for_geeks_dataset/java/ADD_1_TO_A_GIVEN_NUMBER.java")
+    code_python = open_file(
+        "geeks_for_geeks_dataset/python/ADD_1_TO_A_GIVEN_NUMBER.py")
+
+    tree_cpp = create_parse_tree(code_cpp, CPP)
+    tree_java = create_parse_tree(code_java, JAVA)
+    tree_python = create_parse_tree(code_python, PYTHON)
+
+    array_cpp = create_dict(tree_cpp, code_cpp, CPP)
+    array_java = create_dict(tree_java, code_java, JAVA)
+    array_python = create_dict(tree_python, code_python, PYTHON)
+
+    san_array_cpp = sanitize_dict(array_cpp)
+    san_array_java = sanitize_dict(array_java)
+    san_array_python = sanitize_dict(array_python)
+    
+    create_json(san_array_cpp, CPP)
+    create_json(san_array_java,JAVA)
+    create_json(san_array_python, PYTHON)
