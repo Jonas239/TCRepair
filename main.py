@@ -94,7 +94,7 @@ def create_dict(tree, code, language):
 
 def sanitize_dict(dict):
     """sanitizes the dictionary for unnecessary infos"""
-    unnecessary_infos =[")","(",":","=","+","-","*","//",";","^","/","\\","[","]", "{","}",".",",","%","comment","module","translation_unit","&","\""]
+    unnecessary_infos =[")","(",":","=","+","-","*","//",";","^","/","\\","[","]", "{","}",".",",","%","comment","module","translation_unit","&","\"","<",">","\n"]
     for key in list(dict.keys()):
         for string in unnecessary_infos:
             if string in key:
