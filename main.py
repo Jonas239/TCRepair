@@ -44,7 +44,6 @@ def create_parse_tree(input_code, input_language):
         return parser_jv.parse(bytes(input_code, "utf-8"))
     if input_language == "PYTHON":
         return parser_py.parse(bytes(input_code, "utf-8"))
-    
 
 
 def node_source_to_string(source, node):
@@ -55,14 +54,12 @@ def node_source_to_string(source, node):
 def traverse_tree(tree, code):
     """function for traversing the tree"""
     cursor = tree.walk()
-
     reached_root = False
-    while reached_root is False:
-        yield cursor.node.type, node_source_to_string(code, cursor.node), cursor.node.start_byte, cursor.node.end_byte
 
+    while reached_root is False:
+        yield cursor.node.type, node_source_to_string(code, cursor.node), cursor.node.start_point[0], cursor.node.end_point[0]
         if cursor.goto_first_child():
             continue
-
         if cursor.goto_next_sibling():
             continue
 
@@ -71,7 +68,6 @@ def traverse_tree(tree, code):
             if not cursor.goto_parent():
                 retracing = False
                 reached_root = True
-
             if cursor.goto_next_sibling():
                 retracing = False
 
@@ -92,17 +88,20 @@ def create_dict(tree, code, language):
         json_dict[key] = node[1]
     return json_dict
 
-def sanitize_dict(dict):
+
+def sanitize_dict(dict_):
     """sanitizes the dictionary for unnecessary infos"""
-    unnecessary_infos =[")","(",":","=","+","-","*","//",";","^","/","\\","[","]", "{","}",".",",","%","comment","module","translation_unit","&","\"","<",">","\n"]
-    for key in list(dict.keys()):
+    unnecessary_infos = [")", "(", ":", "=", "+", "-", "*", "//", ";", "^", "/", "\\", "[", "]",
+                         "{", "}", ".", ",", "%", "comment", "module", "translation_unit", "&", "\"", "<", ">", "\n"]
+    for key in list(dict_.keys()):
         for string in unnecessary_infos:
             if string in key:
                 try:
-                    del dict[key]
-                except:
+                    del dict_[key]
+                except KeyError:
                     continue
-    return dict
+    return dict_
+
 
 def create_json(array, language):
     """writes array to json"""
@@ -119,11 +118,12 @@ def create_json(array, language):
 
 if __name__ == "__main__":
 
-    code_cpp = open_file("geeks_for_geeks_dataset/cpp/ADD_1_TO_A_GIVEN_NUMBER.cpp")
+    code_cpp = open_file(
+        "self_made_dataset/cpp/one.cpp")
     code_java = open_file(
-        "geeks_for_geeks_dataset/java/ADD_1_TO_A_GIVEN_NUMBER.java")
+        "self_made_dataset/java/one.java")
     code_python = open_file(
-        "geeks_for_geeks_dataset/python/ADD_1_TO_A_GIVEN_NUMBER.py")
+        "self_made_dataset/python/one.py")
 
     tree_cpp = create_parse_tree(code_cpp, CPP)
     tree_java = create_parse_tree(code_java, JAVA)
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     san_array_cpp = sanitize_dict(array_cpp)
     san_array_java = sanitize_dict(array_java)
     san_array_python = sanitize_dict(array_python)
-    
+
     create_json(san_array_cpp, CPP)
-    create_json(san_array_java,JAVA)
+    create_json(san_array_java, JAVA)
     create_json(san_array_python, PYTHON)
