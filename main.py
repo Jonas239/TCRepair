@@ -84,23 +84,25 @@ def create_dict(tree, code, language):
     traverse_tree_ = traverse_tree(tree, code_)
     json_dict = {}
     for node in traverse_tree_:
-        key = node[0] + "_" + str(node[2]) + "_" + str(node[3])
-        json_dict[key] = node[1]
+        print(node)
     return json_dict
 
+def return_key_with_nested_empty_dict():
+    """clue's in the name"""
+    pass
 
-def sanitize_dict(dict_):
-    """sanitizes the dictionary for unnecessary infos"""
-    unnecessary_infos = [")", "(", ":", "=", "+", "-", "*", "//", ";", "^", "/", "\\", "[", "]",
-                         "{", "}", ".", ",", "%", "comment", "module", "translation_unit", "&", "\"", "<", ">", "\n"]
-    for key in list(dict_.keys()):
-        for string in unnecessary_infos:
-            if string in key:
-                try:
-                    del dict_[key]
-                except KeyError:
-                    continue
-    return dict_
+def get_number_range(number_small,number_big):
+    """returns all number between two numbers"""
+    res = []
+    while(number_small < number_big):
+        res.append(number_small)
+        number_small += 1
+    return res
+
+
+def has_difference(number_small,number_big):
+    """checks for equal values"""
+    return (number_small-number_big)!=0
 
 
 def create_json(array, language):
@@ -133,10 +135,6 @@ if __name__ == "__main__":
     array_java = create_dict(tree_java, code_java, JAVA)
     array_python = create_dict(tree_python, code_python, PYTHON)
 
-    san_array_cpp = sanitize_dict(array_cpp)
-    san_array_java = sanitize_dict(array_java)
-    san_array_python = sanitize_dict(array_python)
-
-    create_json(san_array_cpp, CPP)
-    create_json(san_array_java, JAVA)
-    create_json(san_array_python, PYTHON)
+    # create_json(array_cpp, CPP)
+    # create_json(array_java, JAVA)
+    # create_json(array_python, PYTHON)
