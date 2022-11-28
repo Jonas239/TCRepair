@@ -20,19 +20,42 @@ def create_hugger(language):
     if language == CPP:
         return CPPParser(library_loc="build/my-languages.so")
 
-def compare_bits(language_one, language_two):
-  pass
+def get_function_heads(py, jv, cpp):
+    if py:
+        yield py.get_all_function_names_with_params()
+    elif jv:
+        yield jv.get_all_method_names_with_params()
+    elif cpp:
+        yield cpp.get_all_function_names_with_params()
+
+def get_function_bodies(py, jv, cpp):
+    if py:
+        yield py.get_all_function_bodies()
+    elif jv:
+        yield jv.get_all_class_method_bodies()
+    elif cpp:
+        yield cpp.get_all_function_bodies()
+
 
 def compare_function_heads():
+    py,jv,cpp = get_function_heads()
+    if py:
+        for 
+
+
+    """compares the heads of two functions and gives an estimate on equality"""
     pass
 
 def compare_function_bodies():
+    """compares the bodies of two functions and gives an estimate on equality"""
     pass
 
 def compare_line():
+    """compares lines and gives an estimate on equality"""
     pass
 
 def extract_java_functions():
+    pass
 
 
 
