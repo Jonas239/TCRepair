@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 def f_gold ( x ) :
-    return ( - ( ~ x ) ) ;
+    return ( - ( ~ x ) ) 
 
 
 #TOFILL
