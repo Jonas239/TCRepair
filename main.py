@@ -70,6 +70,7 @@ def compare_function_heads(language_one, language_two, py_=None, jv_=None, cpp_=
                         for item, jitem in zip(final_compare_py, final_compare_jv):
                             sums.append(fuzz.ratio(item, jitem))
                         findings[py_key] = statistics.median(sums)
+                    
 
     if language_one == PYTHON and language_two == CPP or language_one == CPP and language_two == PYTHON:
         if py and cpp:
@@ -135,17 +136,20 @@ if __name__ == "__main__":
     # jv_function_names = jv.get_all_class_method_names()
     # cpp_function_names = cpp.get_all_function_names()
 
-    py_function_heads = py.get_all_function_names_with_params()
-    jv_function_heads = extract_java_functions(jv.get_all_method_names_with_params())
-    cpp_function_heads = cpp.get_all_function_names_with_params()
+    # py_function_heads = py.get_all_function_names_with_params()
+    # jv_function_heads = extract_java_functions(jv.get_all_method_names_with_params())
+    # cpp_function_heads = cpp.get_all_function_names_with_params()
 
 
-    print(compare_function_heads(PYTHON,JAVA,py_function_heads,jv_function_heads,cpp_function_heads))
+    # print(compare_function_heads(PYTHON,JAVA,py_function_heads,jv_function_heads,cpp_function_heads))
 
+    py_function_bodies = py.get_all_function_bodies()
+    jv_function_bodies = jv.get_all_method_bodies()
+    cpp_function_bodies = cpp.get_all_function_bodies()
 
-    # print("------------_PYTHON_-----------------")
-    # print(py_function_bodies)
-    # print("------------_JAVA_-----------------")
-    # print(extract_java_functions(jv_function_bodies))
-    # print("------------_CPP_-----------------")
-    # print(cpp_function_bodies["test"][0][0])
+    print("------------_PYTHON_-----------------")
+    print(py_function_bodies["test"])
+    print("------------_JAVA_-----------------")
+    print(extract_java_functions(jv_function_bodies)["test"])
+    print("------------_CPP_-----------------")
+    print(cpp_function_bodies)
