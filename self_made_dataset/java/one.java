@@ -3,6 +3,10 @@ public class Test{
 public int test (int x, int y){
     x = x + y;
     y = x - x + y^2;
+    while(true){
+        int i = 0;
+        i = i + 1;
+    }
     return y;
 }
 

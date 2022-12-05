@@ -1,8 +1,7 @@
 """Main script"""
 import statistics
-import re
 from tree_hugger.core import PythonParser, JavaParser, CPPParser
-from fuzzywuzzy import fuzz, process
+from fuzzywuzzy import fuzz
 
 PYTHON = "PYTHON"
 JAVA = "JAVA"
@@ -23,8 +22,8 @@ operators = [["==", "!=", ">=", "<=", ">", "<"],  # comparison
 
 def open_file(file):
     """opens a file and returns its content as string"""
-    with open(file, "r", encoding="utf-8") as f:
-        file_ = f.read()
+    with open(file, "r", encoding="utf-8") as source_code:
+        file_ = source_code.read()
     return file_
 
 
@@ -190,16 +189,42 @@ def sanitize_python_body(sample_string):
             final_strings.append(line)
     return final_strings
 
+
 def sanitize_java_cpp_body(sample_string):
     """returns a java/cpp body without clauses"""
     final_strings = []
-    matches = ["{","}"]
+    matches = ["{", "}"]
     strings = split_strings(sample_string)
     for line in strings:
         if not any(x in line for x in matches):
             final_strings.append(line)
     return final_strings
- 
+
+
+def get_all_while_loops():
+    """return all while loops in dict style per function"""
+    pass
+
+
+def get_all_for_loops():
+    """return all for loops in dict style per function"""
+
+
+def get_all_lambdas():
+    """identify all lambdas per funciton"""
+    pass
+
+
+def get_all_if_else_blocks():
+    """return all if else blocks in dict style per function"""
+    pass
+
+
+def get_python_main_function():
+    """return python main function in dict style"""
+    pass
+
+
 # generate language code from extracted information
 if __name__ == "__main__":
 
@@ -232,4 +257,5 @@ if __name__ == "__main__":
     print("------------_CPP_-----------------")
     print(cpp_function_bodies["test"])
 
-    print(compare_function_bodies(PYTHON,JAVA, py_function_bodies, extract_java_functions(jv_function_bodies)))
+    # print(compare_function_bodies(PYTHON, JAVA, py_function_bodies,
+    #       extract_java_functions(jv_function_bodies)))
