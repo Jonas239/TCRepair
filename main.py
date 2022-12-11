@@ -74,11 +74,11 @@ class TreeNode:
         """returns all children of a node"""
         return self.children
 
-    def extract_function_heads(self):
+    def extract_functions(self):
         """extract all functions"""
         pass
 
-    def extract_class_heads(self):
+    def extract_class(self):
         """extract all class"""
         pass
 
