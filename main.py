@@ -58,7 +58,7 @@ class TreeNode:
     def print_tree(self, level=0):
         """print the whole tree"""
         print('  ' * level +
-              f"{self.node_type}")
+              f"Type: {self.node_type} Code: {self.source_code}")
         for child in self.children:
             child.print_tree(level + 1)
 
@@ -74,28 +74,21 @@ class TreeNode:
         """returns all children of a node"""
         return self.children
 
-    def extract_functions(self):
-        """extract all functions"""
-        pass
+    def find_all_nodes_with_text(self, source_code):
+        """find all nodes that resemble this text"""
+        findings = []
+        for child in self.children:
+            child.find_all_nodes_with_text(source_code)
+            findings.append(self.source_code)
+        return findings
 
-    def extract_class(self):
-        """extract all class"""
-        pass
-
-    def extract_if_else_statement(self):
-        """extract all if else statements"""
-        pass
-
-    def extract_while_loops(self):
-        """extract all while loops"""
-        pass
-
-    def extract_for_loops(self):
-        """extract all for loops"""
-        pass
-
-    def __eq__(self, other):
-        return self.node_type == other.node_type and self.source_code == other.source_code and self.children == other.children
+    def find_best_matching_node_with_text(self, source_code):
+        """returns the best fit for node"""
+        for child in self.children:
+            if source_code == child.source_code:
+                return child.node_type
+            else:
+                child.find_node_with_text(source_code)
 
 
 def tree_sitter_to_tree(node):
@@ -134,10 +127,11 @@ python_root_node = create_parse_tree(python_file, PYTHON)
 java_root_node = create_parse_tree(java_file, JAVA)
 cpp_root_node = create_parse_tree(cpp_file, CPP)
 
-new_python = python_root_node.children
+python_tree = tree_sitter_to_tree(python_root_node)
+java_tree = tree_sitter_to_tree(java_root_node)
+cpp_tree = tree_sitter_to_tree(cpp_root_node)
 
-print(new_python)
-
+python_tree.print_tree()
 
 # print("------------------------------------------------PYTHON------------------------------------------------")
 # python_tree = tree_sitter_to_tree(python_root_node)
