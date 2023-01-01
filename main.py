@@ -1,4 +1,6 @@
 """Import the tree-sitter parser and the python bindings"""
+import json
+import os
 from tree_sitter import Language, Parser
 
 Language.build_library(
@@ -35,25 +37,14 @@ parser_jv.set_language(JV_LANGUAGE)
 parser_cpp = Parser()
 parser_cpp.set_language(CPP_LANGUAGE)
 
-# Create a tree-sitter parser object for the desired language
-
-# Convert the tree-sitter parser to a tree-sitter syntax tree
-
-# Get the root node of the tree
-
-# Define a Python tree node class
-
-
 class TreeNode:
     """class for accessing tree sitter nodes more easily"""
 
-    def __init__(self, node_type, source_code, start_line, end_line):
+    def __init__(self, node_type, source_code):
         """Constructor"""
         self.node_type = node_type
         self.source_code = source_code.decode()
         self.children = []
-        self.start_line = start_line
-        self.end_line = end_line
 
     def print_tree(self, level=0):
         """print the whole tree"""
@@ -74,32 +65,34 @@ class TreeNode:
         """returns all children of a node"""
         return self.children
 
-    def find_all_nodes_with_text(self, source_code):
-        """find all nodes that resemble this text"""
-        findings = []
-        for child in self.children:
-            child.find_all_nodes_with_text(source_code)
-            findings.append(self.source_code)
-        return findings
-
-    def find_best_matching_node_with_text(self, source_code):
-        """returns the best fit for node"""
-        for child in self.children:
-            if source_code == child.source_code:
-                return child.node_type
-            else:
-                child.find_node_with_text(source_code)
-
 
 def tree_sitter_to_tree(node):
     """convert a tree sitter tree to a TreeNode tree, requires the root node to be passed"""
-    tree_node = TreeNode(node.type, node.text,
-                         node.start_point[0], node.end_point[0])
+    tree_node = TreeNode(node.type, node.text)
     for i in range(node.child_count):
         child = node.children[i]
         tree_node.children.append(tree_sitter_to_tree(child))
 
     return tree_node
+
+def find_best_fit(root, code_string):
+    """finds the fitting node type for given source code"""
+    if root.source_code == code_string:
+        return (root.source_code, root.node_type)
+    for child in root.children:
+        result = find_best_fit(child, code_string)
+        if result is not None:
+            return result
+    return None
+
+def tokenize(src_code, language):
+    parser = Parser()
+    parser.set_language(language)
+    tree = parser.parse(src_code)
+    tokens = []
+    for node in tree.iter_tokens():
+        tokens.append(node.utf8_text())
+    return tokens
 
 
 def create_parse_tree(input_code, input_language):
@@ -119,9 +112,9 @@ def return_file_content(file_path):
     return file
 
 
-python_file = return_file_content("self_made_dataset/python/one.py")
-java_file = return_file_content("self_made_dataset/java/one.java")
-cpp_file = return_file_content("self_made_dataset/cpp/one.cpp")
+python_file = return_file_content("self_made_dataset/python/two_functions.py")
+java_file = return_file_content("self_made_dataset/java/assignment.java")
+cpp_file = return_file_content("self_made_dataset/cpp/assignment.cpp")
 
 python_root_node = create_parse_tree(python_file, PYTHON)
 java_root_node = create_parse_tree(java_file, JAVA)
@@ -131,7 +124,23 @@ python_tree = tree_sitter_to_tree(python_root_node)
 java_tree = tree_sitter_to_tree(java_root_node)
 cpp_tree = tree_sitter_to_tree(cpp_root_node)
 
-python_tree.print_tree()
+code = """
+def add(x, y):
+    return x + y
+"""
+
+tokens = tokenize(code, PY_LANGUAGE)
+print(tokens)
+
+
+
+
+
+# python_tree.print_tree()
+# replace_tokens(python_tree, "self_made_dataset/python/two_functions.py", "rule-set-python.json")
+# replace_tokens(java_tree, "self_made_dataset/java/two_functions.java", "rule-set-java.json")
+# replace_tokens(cpp_tree, "self_made_dataset/cpp/two_functions.cpp", "rule-set-cpp.json")
+
 
 # print("------------------------------------------------PYTHON------------------------------------------------")
 # python_tree = tree_sitter_to_tree(python_root_node)
