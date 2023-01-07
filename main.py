@@ -9,15 +9,11 @@ Language.build_library(
 
     # Include one or more languages
     [
-        '/tree-sitter-python',
-        '/tree-sitter-java',
-        '/tree-sitter-cpp'
+        '/Users/jonas/tree-sitter-python',
+        '/Users/jonas/tree-sitter-java',
+        '/Users/jonas/tree-sitter-cpp'
     ]
 )
-
-PY_LANGUAGE = Language('build/my-languages.so', 'python')
-JV_LANGUAGE = Language('build/my-languages.so', 'java')
-CPP_LANGUAGE = Language('build/my-languages.so', 'cpp')
 
 PY_LANGUAGE = Language('build/my-languages.so', 'python')
 JV_LANGUAGE = Language('build/my-languages.so', 'java')
@@ -66,14 +62,58 @@ class TreeNode:
         return self.children
 
 
-def tree_sitter_to_tree(node):
-    """convert a tree sitter tree to a TreeNode tree, requires the root node to be passed"""
-    tree_node = TreeNode(node.type, node.text)
-    for i in range(node.child_count):
-        child = node.children[i]
-        tree_node.children.append(tree_sitter_to_tree(child))
+# def tree_sitter_to_tree(node):
+#     """convert a tree sitter tree to a TreeNode tree, requires the root node to be passed"""
+#     tree_node = TreeNode(node.type, node.text)
+#     for i in range(node.child_count):
+#         child = node.children[i]
+#         tree_node.children.append(tree_sitter_to_tree(child))
 
-    return tree_node
+#     return tree_node
+
+def load_node_type_mapping():
+    with open("node_type_mapping.json", "r") as f:
+        return json.load(f)
+
+def get_language(file):
+    if file.endswith(".py"):
+        return PYTHON
+    elif file.endswith(".java"):
+        return JAVA
+    elif file.endswith(".cpp"):
+        return CPP
+    else:
+        return None
+
+def parse_file(file):
+    with open(file, "r") as f:
+        code = f.read()
+        if get_language(file) == PYTHON:
+            return parser_py.parse(bytes(code, 'utf8'))
+        elif get_language(file) == JAVA:
+            return parser_jv.parse(bytes(code, 'utf8'))
+        elif get_language(file) == CPP:
+            return parser_cpp.parse(bytes(code, 'utf8'))
+        else:
+            return None
+
+def map_node_type(node_type, to_language, node_type_mapping):
+    if node_type in node_type_mapping:
+        return node_type_mapping[node_type][to_language]
+    return None
+
+def get_key_from_value(value, language, node_type_mapping):
+    for key, val in node_type_mapping.items():
+        if val[language] == value:
+            return key
+    return None
+
+def translate_node_type(node_type, from_language, to_language, node_type_mapping):
+    key = get_key_from_value(node_type, from_language, node_type_mapping)
+    return map_node_type(key, to_language, node_type_mapping)
+
+def split_text(text):
+    return text.split(" ")
 
 def find_best_fit(root, code_string):
     """finds the fitting node type for given source code"""
@@ -85,71 +125,27 @@ def find_best_fit(root, code_string):
             return result
     return None
 
-def tokenize(src_code, language):
-    parser = Parser()
-    parser.set_language(language)
-    tree = parser.parse(src_code)
-    tokens = []
-    for node in tree.iter_tokens():
-        tokens.append(node.utf8_text())
-    return tokens
+def tree_sitter_to_tree(node, node_type_mapping, from_language, to_language):
+    """convert a tree sitter tree to a TreeNode tree, requires the root node to be passed"""
+    tree_node = TreeNode(translate_node_type(node.type, from_language, to_language, node_type_mapping), node.text)
+    for i in range(node.child_count):
+        child = node.children[i]
+        tree_node.children.append(tree_sitter_to_tree(child, node_type_mapping, from_language, to_language))
 
+    return tree_node
 
-def create_parse_tree(input_code, input_language):
-    """return s-expression and parse tree for the given code and language using the tree-sitter"""
-    if input_language == "CPP":
-        return parser_cpp.parse(bytes(input_code, "utf-8")).root_node
-    if input_language == "JAVA":
-        return parser_jv.parse(bytes(input_code, "utf-8")).root_node
-    if input_language == "PYTHON":
-        return parser_py.parse(bytes(input_code, "utf-8")).root_node
-
-
-def return_file_content(file_path):
-    """returns file content"""
-    with open(file_path, "r+", encoding='utf-8') as f:
-        file = f.read()
-    return file
-
-
-python_file = return_file_content("self_made_dataset/python/two_functions.py")
-java_file = return_file_content("self_made_dataset/java/assignment.java")
-cpp_file = return_file_content("self_made_dataset/cpp/assignment.cpp")
-
-python_root_node = create_parse_tree(python_file, PYTHON)
-java_root_node = create_parse_tree(java_file, JAVA)
-cpp_root_node = create_parse_tree(cpp_file, CPP)
-
-python_tree = tree_sitter_to_tree(python_root_node)
-java_tree = tree_sitter_to_tree(java_root_node)
-cpp_tree = tree_sitter_to_tree(cpp_root_node)
-
-code = """
-def add(x, y):
-    return x + y
-"""
-
-tokens = tokenize(code, PY_LANGUAGE)
-print(tokens)
+def ask_user_for_node_type(node_type, from_language, to_language, node_type_mapping):
+    print(f"Please enter the node type for {node_type} in {to_language}:")
+    new_node_type = input()
+    node_type_mapping[node_type] = {from_language: node_type, to_language: new_node_type}
+    return new_node_type
 
 
 
 
 
-# python_tree.print_tree()
-# replace_tokens(python_tree, "self_made_dataset/python/two_functions.py", "rule-set-python.json")
-# replace_tokens(java_tree, "self_made_dataset/java/two_functions.java", "rule-set-java.json")
-# replace_tokens(cpp_tree, "self_made_dataset/cpp/two_functions.cpp", "rule-set-cpp.json")
 
 
-# print("------------------------------------------------PYTHON------------------------------------------------")
-# python_tree = tree_sitter_to_tree(python_root_node)
-# python_tree.print_tree()
-# print(" ")
-# print("------------------------------------------------JAVA------------------------------------------------")
-# java_tree = tree_sitter_to_tree(java_root_node)
-# java_tree.print_tree()
-# print(" ")
-# print("------------------------------------------------CPP------------------------------------------------")
-# cpp_tree = tree_sitter_to_tree(cpp_root_node)
-# cpp_tree.print_tree()
+
+
+
