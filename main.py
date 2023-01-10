@@ -23,6 +23,8 @@ CPP = "CPP"
 PYTHON = "PYTHON"
 JAVA = "JAVA"
 
+languages = [PYTHON, JAVA, CPP]
+
 # Create Parsers for the three languages
 parser_py = Parser()
 parser_py.set_language(PY_LANGUAGE)
@@ -62,6 +64,44 @@ class TreeNode:
     def get_children(self):
         """returns all children of a node"""
         return self.children
+    
+    def get_all_function_heads(self):
+        """returns all function heads"""
+        function_heads = []
+        if self.node_type == "function_definition":
+            function_heads.append(self)
+        for child in self.children:
+            function_heads.extend(child.get_all_function_heads())
+        return function_heads
+    
+    def get_function_body(self):
+        """returns the function body"""
+        function_body = []
+        for child in self.children:
+            if child.node_type == "function_body":
+                function_body.append(child)
+            else:
+                function_body.extend(child.get_function_body())
+        return function_body
+    
+    def get_all_function_bodies_with_heads_as_key(self):
+        """returns all function bodies with the function head as key"""
+        function_bodies = {}
+        if self.node_type == "function_definition":
+            function_bodies[self] = self.get_function_body()
+        for child in self.children:
+            function_bodies.update(child.get_all_function_bodies_with_heads_as_key())
+        return function_bodies
+
+    def filter_for_node_type(self, node_type):
+        """returns a list of all nodes of a given type"""
+        nodes = []
+        if self.node_type == node_type:
+            nodes.append(self)
+        for child in self.children:
+            nodes.extend(child.filter_for_node_type(node_type))
+        return nodes
+
 
 
 # def tree_sitter_to_tree(node):
@@ -110,9 +150,9 @@ def map_node_type(node_type, to_language, node_type_mapping):
 #     return None
 
 
-def get_keys_from_value(value, language, node_type_mapping):
+def get_keys_from_value(value, language, node_type_mapping_):
     """returns the keys for a given value"""
-    return [key for key, val in node_type_mapping.items() if val[language] == value]
+    return [key for key, val in node_type_mapping_.items() if val[language] == value]
 
 
 def translate_node_type(node_type, from_language, to_language, node_type_mapping):
@@ -147,7 +187,8 @@ def tree_sitter_to_tree(node, node_type_mapping_, from_language):
 
     return tree_node
 
-def check_tree(tree_node, language, node_type_mapping):
+def check_tree(tree_node, language, node_type_mapping_, languages_):
+    """checks if the node type is correct, if not, the user is asked to select the correct node type"""
     if isinstance(tree_node.node_type, list) and len(tree_node.node_type) > 2:
         print("Multiple possible generalized node types found for \nsource code: " + tree_node.source_code + "\nnode type: " + tree_node.language_specific_type + "\n")
         for i, t in enumerate(tree_node.node_type):
@@ -159,10 +200,16 @@ def check_tree(tree_node, language, node_type_mapping):
     elif isinstance(tree_node.node_type, list) and len(tree_node.node_type) == 0:
         new_node_type = input("Please enter a generalized node type name for \nsource code: " + tree_node.source_code +  " \nnode type: "+ tree_node.language_specific_type + "\n")
         tree_node.node_type = new_node_type
-        node_type_mapping[new_node_type] = {language: tree_node.language_specific_type}    
+        node_type_mapping_[new_node_type] = {language: tree_node.language_specific_type}
+        for lang in languages_:
+            if lang != language:
+                if node_type_mapping_[new_node_type][lang]:
+                    continue
+                else:
+                    node_type_mapping_[new_node_type][lang] = None
 
     for child in tree_node.children:
-        check_tree(child, language, node_type_mapping)
+        check_tree(child, language, node_type_mapping, languages_)
 
 def check_tree_nodes_equal(node1, node2):
     """checks if two trees are equal"""
@@ -186,12 +233,12 @@ cpp_file = parse_file("self_made_dataset/cpp/assignment.cpp", CPP)
 node_type_mapping = load_node_type_mapping()
 
 python_tree = tree_sitter_to_tree(python_file.root_node, node_type_mapping, PYTHON)
+java_tree = tree_sitter_to_tree(java_file.root_node, node_type_mapping, JAVA)
+cpp_tree = tree_sitter_to_tree(cpp_file.root_node, node_type_mapping, CPP)
 
-check_tree(python_tree, PYTHON, node_type_mapping)
+check_tree(python_tree, PYTHON, node_type_mapping, languages_=languages)
+check_tree(java_tree, JAVA, node_type_mapping, languages_=languages)
+check_tree(cpp_tree, CPP, node_type_mapping, languages_=languages)
 
 FILEPATH = "node_type_mapping.json"
 write_to_json_file(node_type_mapping, FILEPATH)
-
-
-
-
