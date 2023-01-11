@@ -37,70 +37,58 @@ parser_cpp.set_language(CPP_LANGUAGE)
 
 
 class TreeNode:
-    """class for accessing tree sitter nodes more easily"""
-
     def __init__(self, node_type, source_code, language_specific_type):
-        """Constructor"""
         self.node_type = node_type
         self.source_code = source_code.decode()
         self.children = []
         self.language_specific_type = language_specific_type
 
     def print_tree(self, level=0):
-        """print the whole tree"""
-        print('  ' * level +
-              f"Lifted Type: {self.node_type} , Original Type: {self.language_specific_type} , Code: {self.source_code}")
+        print('  ' * level + f"Lifted Type: {self.node_type} , Original Type: {self.language_specific_type} , Code: {self.source_code}")
         for child in self.children:
             child.print_tree(level + 1)
-
+            
     def get_node_type(self):
-        """returns the type of a node"""
         return self.node_type
 
-    def get_soure_code(self):
-        """returns the corresponding source code for the node"""
+    def get_source_code(self):
         return self.source_code
 
     def get_children(self):
-        """returns all children of a node"""
         return self.children
-    
+
     def get_all_function_heads(self):
-        """returns all function heads"""
         function_heads = []
         if self.node_type == "function_definition":
             function_heads.append(self)
         for child in self.children:
             function_heads.extend(child.get_all_function_heads())
         return function_heads
-    
+
     def get_function_body(self):
-        """returns the function body"""
         function_body = []
+        if self.node_type == "function_body":
+            function_body.append(self)
         for child in self.children:
-            if child.node_type == "function_body":
-                function_body.append(child)
-            else:
-                function_body.extend(child.get_function_body())
+            function_body.extend(child.get_function_body())
         return function_body
-    
+
     def get_all_function_bodies_with_heads_as_key(self):
-        """returns all function bodies with the function head as key"""
         function_bodies = {}
         if self.node_type == "function_definition":
             function_bodies[self] = self.get_function_body()
         for child in self.children:
-            function_bodies.update(child.get_all_function_bodies_with_heads_as_key())
+            function_bodies.update(child.get_all_function_bodies_with_keys_as_key())
         return function_bodies
 
     def filter_for_node_type(self, node_type):
-        """returns a list of all nodes of a given type"""
-        nodes = []
-        if self.node_type == node_type:
-            nodes.append(self)
+        filtered_nodes = []
+        if self.language_specific_type == node_type:
+            filtered_nodes.append(self.source_code)
         for child in self.children:
-            nodes.extend(child.filter_for_node_type(node_type))
-        return nodes
+            filtered_nodes.extend(child.filter_for_node_type(node_type))
+        return filtered_nodes
+
 
 
 
@@ -153,6 +141,13 @@ def map_node_type(node_type, to_language, node_type_mapping):
 def get_keys_from_value(value, language, node_type_mapping_):
     """returns the keys for a given value"""
     return [key for key, val in node_type_mapping_.items() if val[language] == value]
+
+# def get_keys_from_value(value, language, node_type_mapping_):
+#     """returns the keys for a given value"""
+#     keys = [key for key, val in node_type_mapping_.items() if val.get(language, None) == value]
+#     if not keys:
+#         raise KeyError(f'No keys found for value {value} in language {language}')
+#     return keys
 
 
 def translate_node_type(node_type, from_language, to_language, node_type_mapping):
@@ -226,19 +221,23 @@ def check_tree_nodes_equal(node1, node2):
     return sum(equalities) / len(equalities)
 
 
-python_file = parse_file("self_made_dataset/python/assignment.py", PYTHON)
+python_file = parse_file("self_made_dataset/python/two_functions.py", PYTHON)
 java_file = parse_file("self_made_dataset/java/assignment.java", JAVA)
 cpp_file = parse_file("self_made_dataset/cpp/assignment.cpp", CPP)
 
 node_type_mapping = load_node_type_mapping()
 
 python_tree = tree_sitter_to_tree(python_file.root_node, node_type_mapping, PYTHON)
-java_tree = tree_sitter_to_tree(java_file.root_node, node_type_mapping, JAVA)
-cpp_tree = tree_sitter_to_tree(cpp_file.root_node, node_type_mapping, CPP)
+# java_tree = tree_sitter_to_tree(java_file.root_node, node_type_mapping, JAVA)
+# cpp_tree = tree_sitter_to_tree(cpp_file.root_node, node_type_mapping, CPP)
 
-check_tree(python_tree, PYTHON, node_type_mapping, languages_=languages)
-check_tree(java_tree, JAVA, node_type_mapping, languages_=languages)
-check_tree(cpp_tree, CPP, node_type_mapping, languages_=languages)
+# check_tree(python_tree, PYTHON, node_type_mapping, languages_=languages)
+# check_tree(java_tree, JAVA, node_type_mapping, languages_=languages)
+# check_tree(cpp_tree, CPP, node_type_mapping, languages_=languages)
+
+
+python_tree.print_tree()
+print(python_tree.filter_for_node_type('function_definition'))
 
 FILEPATH = "node_type_mapping.json"
 write_to_json_file(node_type_mapping, FILEPATH)
